@@ -7,6 +7,7 @@ import { PrismaClient } from "@prisma/client"
 const prisma = new PrismaClient()
 
 export const options: NextAuthOptions = {
+    // @ts-ignore
     adapter: PrismaAdapter(prisma),
     providers: [
         GoogleProvider({
