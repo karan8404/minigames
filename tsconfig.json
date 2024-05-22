@@ -7,7 +7,7 @@
     "strict": false,
     "noEmit": true,
     "esModuleInterop": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -20,7 +20,7 @@
     "paths": {
       "@/*": ["./*"]
     },
-    "module": "esnext"
+    "module": "commonjs"
   },
   "include": ["next-env.d.ts", ".next/types/**/*.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
