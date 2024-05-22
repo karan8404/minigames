@@ -2,7 +2,6 @@
 import React, { use, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Board from '@/components/tic-tac-toe/Board';
 import { Player } from '@/components/tic-tac-toe/Player';
 import { onlineGame } from '@/components/tic-tac-toe/onlineGame';
 import { useState } from "react";
@@ -26,6 +25,44 @@ const Page = () => {
     const [gameState, setGameState] = useState('waiting');//waiting,searching,playing
     const [availablePlayers, setAvailablePlayers] = useState<Map<string, Player>>();
 
+    const [statusCode, setStatusCode] = useState<number>(0);
+
+    const getGameStatus = (statusCode: number) => {
+        if (!Game && statusCode === 0) {
+            return ('test');
+        }
+        switch (statusCode) {
+            case 0:
+                if ((Game.currPlayer ? Game.player1.userID : Game.player2.userID) === player.userID) {
+                    return ('Game is On , Your Turn');
+                }
+                else {
+                    return ('Game is On , Opponent\'s Turn');
+                }
+            case 1:
+                if (Game.player1.userID === player.userID) {
+                    return ('You Win');
+                }
+                else {
+                    return ('Opponent Wins');
+                }
+                break;
+            case 2:
+                if (Game.player1.userID === player.userID) {
+                    return ('Opponent Wins');
+                }
+                else {
+                    return ('You Win');
+                }
+            case 3:
+                return ('Draw');
+            case -1:
+                return ('Invalid Move')
+            default:
+                return ('');
+        }
+    }
+
     useEffect(() => {
         setPlayer(prevPlayer => ({ ...prevPlayer, socketID: socket.id }));
     }, [socket]);
@@ -37,7 +74,7 @@ const Page = () => {
                 .then(res => res.json())
                 .then(data => {
                     console.log('data:', data);
-                    setPlayer(prevPlayer => new Player(data.userID, socket.id, data.name, email));
+                    setPlayer(new Player(data.userID, socket.id, data.name, email));
                 })
         }
     }, [session]);
@@ -54,29 +91,39 @@ const Page = () => {
             socket.emit('leaveGame');
         }
         if (gameState === 'searching') {
-            const handleAvailablePlayers = (ticTacToePlayers) => {
+
+            socket.on('availablePlayers', (ticTacToePlayers) => {
                 setAvailablePlayers(new Map(Object.entries(ticTacToePlayers)));
                 console.log('availablePlayers:', ticTacToePlayers);
-            };
-            const handleGameStarted = (gameID: string, game: onlineGame) => {
+            });
+
+            socket.on('gameStarted', (gameID: string, game: onlineGame) => {
                 console.log('gameStarted:', gameID, game);
                 socket.emit('join', gameID);
 
                 setGame(game);
                 setOpponent(game.player1.userID === player.userID ? game.player2 : game.player1);
                 setGameState('playing');
-            };
+            });
 
-            socket.on('availablePlayers', handleAvailablePlayers);
-            socket.on('gameStarted', handleGameStarted);
             socket.emit('searching', player);
+
             return () => {
-                socket.off('availablePlayers', handleAvailablePlayers);
-                socket.off('gameStarted', handleGameStarted);
+                socket.off('availablePlayers');
+                socket.off('gameStarted');
             };
         }
         if (gameState === 'playing') {
+            setStatusCode(0);
             //TODO listeners during game
+            socket.on('moveMade', (game: onlineGame, statusCode: number) => {
+                setGame(game);
+                setStatusCode(statusCode);
+            });
+
+            return () => {
+                socket.off('moveMade');
+            };
         }
     }, [gameState]);
 
@@ -86,6 +133,15 @@ const Page = () => {
         </div>;
     }
 
+    const renderSquare = (i: number) => {
+        return (
+            <Button className='border border-red-500 md:h-20 md:w-20 h-16 w-16' onClick={
+                () => socket.emit("madeMove", Game.gameID, player, i)
+            }>{Game.board[i]}
+            </Button>
+        );
+    }
+
     const searchPlayers = () => {
         console.log('searching for players', player);
         setGameState('searching');
@@ -93,10 +149,10 @@ const Page = () => {
     }
 
     const playAgainst = (opponentPlayer: Player) => {
-        // setOpponent(opponentID);
+        console.log('play against:', opponentPlayer);
+        // setOpponent(opponentPlayer);
         // setGameState('playing');
-
-        socket.emit('startGame', { player, opponentPlayer });
+        socket.emit('startGame', player, opponentPlayer)
     }
 
     return (
@@ -139,6 +195,32 @@ const Page = () => {
                                 </div>
                             }
                             <Button className='mt-5' variant={'secondary'} onClick={() => { setGameState('waiting') }}>Cancel Search</Button>
+                        </div>
+                    }
+                    {
+                        (gameState === 'playing' && getGameStatus(statusCode) != "") &&
+                        <div className="absolute container flex flex-col gap-5 items-center justify-center min-h-screen">
+                            <div>You are playing as {
+                                ((Game.currPlayer ? Game.player1.userID : Game.player2.userID) === player.userID) ? Game.currChar : (Game.currChar === 'X' ? 'O' : 'X')
+                            }</div>
+                            <div className='status'>{getGameStatus(statusCode)}</div>
+                            <div>
+                                <div className='flex flex-row'>
+                                    {renderSquare(0)}
+                                    {renderSquare(1)}
+                                    {renderSquare(2)}
+                                </div>
+                                <div className='flex flex-row'>
+                                    {renderSquare(3)}
+                                    {renderSquare(4)}
+                                    {renderSquare(5)}
+                                </div>
+                                <div className='flex flex-row'>
+                                    {renderSquare(6)}
+                                    {renderSquare(7)}
+                                    {renderSquare(8)}
+                                </div>
+                            </div>
                         </div>
                     }
                 </div>

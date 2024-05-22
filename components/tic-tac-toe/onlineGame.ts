@@ -1,6 +1,7 @@
 import { Player } from "./Player";
 
 export class onlineGame {
+  gameID: string;
   player1: Player;
   player2: Player;
   board: Array<string>;
@@ -8,15 +9,16 @@ export class onlineGame {
   currPlayer: boolean; //true - player1, false - player2
 
   constructor(
+    gameID: string,
     player1: Player,
     player2: Player,
-    currChar: string = "X",
     currPlayer: boolean = Math.random() < 0.5
   ) {
+    this.gameID = gameID;
     this.player1 = player1;
     this.player2 = player2;
     this.board = Array(9).fill("");
-    this.currChar = currChar;
+    this.currChar = "X";
     this.currPlayer = currPlayer;
   }
 
@@ -60,5 +62,9 @@ export class onlineGame {
       }
     }
     return false;
+  }
+
+  getcurrPlayer(): Player {
+    return this.currPlayer ? this.player1 : this.player2;
   }
 }

@@ -4,7 +4,7 @@ import { Server } from "socket.io";
 import http from "http";
 import { Player } from "./components/tic-tac-toe/Player";
 import { onlineGame } from "./components/tic-tac-toe/onlineGame";
-import cors  from "cors";
+import cors from "cors";
 const port = 3000;
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
@@ -94,13 +94,35 @@ app.prepare().then(() => {
 
       const gameID = player1.socketID + player2.socketID;
 
-      const game = new onlineGame(player1, player2, "X", true);
+      const game = new onlineGame(gameID, player1, player2, true);
       ticTacToeGames.set(gameID, game);
 
       io.to([player1.socketID, player2.socketID]).emit(
         "gameStarted",
         gameID,
         game
+      );
+    });
+
+    socket.on("madeMove", (gameId: string, player: Player, pos: number) => {
+      console.log("Move Made", gameId, player.name, pos);
+      const game: onlineGame = ticTacToeGames.get(gameId);
+      if (!game) {
+        console.log("Invalid Game");
+        return;
+      }
+      if (
+        (game.currPlayer ? game.player1.socketID : game.player2.socketID) !==
+        player.socketID
+      ) {
+        console.log("Invalid Player");
+        return;
+      }
+      const statusCode = game.makeMove(pos);
+      io.to([game.player1.socketID, game.player2.socketID]).emit(
+        "moveMade",
+        game,
+        statusCode
       );
     });
   });
