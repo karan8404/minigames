@@ -5,7 +5,7 @@ import http from "http";
 import { Player } from "./components/tic-tac-toe/Player";
 import { onlineGame } from "./components/tic-tac-toe/onlineGame";
 import cors from "cors";
-const port = 8080;
+const port = parseInt(process.env.PORT) || 3000;
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
 const handle = app.getRequestHandler();
