@@ -1,7 +1,8 @@
 "use client";
 import { config } from 'dotenv';
-config();
+config({ path: './.env',debug:true});
 import { io } from "socket.io-client";
-
-const socketURL = process.env.PORT? `http://0.0.0.0:${process.env.PORT}` : 'http://localhost:3000';
+const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+const port = process.env.PORT || 3000;
+const socketURL =`http://${host}:${port}`;
 export const socket = io(socketURL);

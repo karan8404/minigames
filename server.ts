@@ -1,3 +1,6 @@
+import { config } from "dotenv";
+config();
+
 import express from "express";
 import next from "next";
 import { Server } from "socket.io";
@@ -144,7 +147,7 @@ app.prepare().then(() => {
     console.error("Server error:", err);
   });
 
-  httpServer.listen(port,"0.0.0.0", () => {
+  httpServer.listen(port, "0.0.0.0", () => {
     console.log(`Ready on http://localhost:${port}`);
   });
 });
