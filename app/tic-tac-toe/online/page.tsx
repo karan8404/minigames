@@ -6,7 +6,7 @@ import { Player } from '@/components/tic-tac-toe/Player';
 import { onlineGame } from '@/components/tic-tac-toe/onlineGame';
 import { useState } from "react";
 import { Button } from '@/components/ui/button';
-import { socket } from '@/components/socket';
+import { socket } from '@/socket';
 import {
     Tooltip,
     TooltipContent,
