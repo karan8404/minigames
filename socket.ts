@@ -7,5 +7,5 @@ console.log(port);
 const socketURL =
   port === 3000
     ? "http://localhost:3000"
-    : `https://minigames-production.up.railway.app:${port}`;
+    : `http://minigames.railway.internal:${port}`;
 export const socket = io(socketURL);
