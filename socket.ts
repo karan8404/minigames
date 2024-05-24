@@ -1,10 +1,11 @@
 import { config } from "dotenv";
-config({ debug: true });
+config({ path:'.env',debug: true });
 import { io } from "socket.io-client";
 
 const port = parseInt(process.env.PORT);
+console.log(port);
 const socketURL =
-  process.env.NODE_ENV === "production"
-    ? `https://minigames-production.up.railway.app:${port}`
-    : "http://localhost:3000";
+  port === 3000
+    ? "http://localhost:3000"
+    : `https://minigames-production.up.railway.app:${port}`;
 export const socket = io(socketURL);
