@@ -158,7 +158,7 @@ const Page = () => {
     return (
         <div className='container py-5'>
             {
-                <div className='flex flex-col gap-4 w-fit'>
+                <div className='flex flex-col gap-4 items-center'>
                     <p>User : {player.name}</p>
                     <p>Socket ID : {socket.id}</p>
                     {
@@ -179,16 +179,11 @@ const Page = () => {
                             {
                                 <div className='border-2 border-blue-600 rounded-md p-5'>
                                     <p className='mb-5'>Available Players:</p>
-                                    <ul className='flex flex-col gap-3'>
+                                    <ul className='flex flex-col bg-emerald-500 rounded-md gap-3'>
                                         {Array.from(availablePlayers?.values() || []).map((anotherPlayer: Player) => {
                                             return (player.userID != anotherPlayer.userID &&
-                                                <li className='bg-slate-600 rounded-md p-2' key={anotherPlayer.userID}>
-                                                    <TooltipProvider><Tooltip>
-                                                        <TooltipTrigger>{anotherPlayer.name}</TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <Button onClick={() => playAgainst(anotherPlayer)}>Play against {anotherPlayer.name}</Button>
-                                                        </TooltipContent>
-                                                    </Tooltip></TooltipProvider>
+                                                <li className='rounded-md p-2' key={anotherPlayer.userID}>
+                                                    <Button variant='outline' onClick={() => playAgainst(anotherPlayer)}>Play against {anotherPlayer.name}</Button>
                                                 </li>)
                                         })}
                                     </ul>
@@ -199,7 +194,7 @@ const Page = () => {
                     }
                     {
                         (gameState === 'playing' && getGameStatus(statusCode) != "") &&
-                        <div className="absolute container flex flex-col gap-5 items-center justify-center min-h-screen">
+                        <div className="flex flex-col gap-5 items-center justify-center w-screen mt-10">
                             <div>You are playing as {
                                 ((Game.currPlayer ? Game.player1.userID : Game.player2.userID) === player.userID) ? Game.currChar : (Game.currChar === 'X' ? 'O' : 'X')
                             }</div>

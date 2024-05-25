@@ -5,14 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle, } from "@/components/ui/card"
 
 export default function GameCard(props: Prop) {
   return (
-    <div>
+    <div className='h-fit w-fit'>
         <Link href={props.href}>
-          <Card>
+          <Card className=''>
             <CardHeader>
               <CardTitle className='text-center'>{props.title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <img src={props.img} alt="" className='flex items-center justify-center' />
+              <img src={props.img} alt="" className='flex items-center justify-center h-56 w-56 object-scale-down' />
             </CardContent>
           </Card>
         </Link>
