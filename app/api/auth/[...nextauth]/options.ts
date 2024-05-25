@@ -1,13 +1,12 @@
 import type { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
-import { PrismaAdapter } from "@auth/prisma-adapter"
+import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
 export const options: NextAuthOptions = {
-    // @ts-ignore
     adapter: PrismaAdapter(prisma),
     providers: [
         GoogleProvider({
@@ -20,5 +19,6 @@ export const options: NextAuthOptions = {
             clientSecret: process.env.GITHUB_SECRET as string,
             allowDangerousEmailAccountLinking: true
         })
-    ]
+    ],
+    
 }
