@@ -97,11 +97,26 @@ app.prepare().then(() => {
 
       const gameID = player1.socketID + player2.socketID;
 
-      const game = new onlineGame(gameID, player1, player2, true);
+      const game = new onlineGame(gameID, player1, player2);
       ticTacToeGames.set(gameID, game);
 
       io.to([player1.socketID, player2.socketID]).emit(
         "gameStarted",
+        gameID,
+        game
+      );
+    });
+
+    socket.on("rematch", (player1: Player, player2: Player) => {
+      console.log("Rematch Started", player1.name, player2.name);
+
+      const gameID = player1.socketID + player2.socketID;
+
+      const game = new onlineGame(gameID, player1, player2);
+      ticTacToeGames.set(gameID, game);
+
+      io.to([player1.socketID, player2.socketID]).emit(
+        "rematchStarted",
         gameID,
         game
       );

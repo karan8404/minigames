@@ -1,5 +1,5 @@
 'use client'
-import React, { use, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Player } from '@/components/tic-tac-toe/Player';
@@ -7,12 +7,6 @@ import { onlineGame } from '@/components/tic-tac-toe/onlineGame';
 import { useState } from "react";
 import { Button } from '@/components/ui/button';
 import { socket } from '@/socket';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip"
 
 
 const Page = () => {
@@ -98,6 +92,7 @@ const Page = () => {
             });
 
             socket.on('gameStarted', (gameID: string, game: onlineGame) => {
+                setStatusCode(0);
                 console.log('gameStarted:', gameID, game);
                 socket.emit('join', gameID);
 
@@ -114,15 +109,24 @@ const Page = () => {
             };
         }
         if (gameState === 'playing') {
-            setStatusCode(0);
+
             //TODO listeners during game
             socket.on('moveMade', (game: onlineGame, statusCode: number) => {
                 setGame(game);
                 setStatusCode(statusCode);
             });
 
+            socket.on('rematchStarted', (gameID: string, game: onlineGame) => {
+                setStatusCode(0);
+                console.log('rematchStarted:', gameID, game);
+                socket.emit('join', gameID);
+                setGame(game);
+                setOpponent(game.player1.userID === player.userID ? game.player2 : game.player1);
+            });
+
             return () => {
                 socket.off('moveMade');
+                socket.off('rematchStarted');
             };
         }
     }, [gameState]);
@@ -153,6 +157,11 @@ const Page = () => {
         // setOpponent(opponentPlayer);
         // setGameState('playing');
         socket.emit('startGame', player, opponentPlayer)
+    }
+
+    const rematch = (opponentPlayer: Player) => {
+        console.log('rematch:', opponentPlayer);
+        socket.emit('rematch', player, opponentPlayer);
     }
 
     return (
@@ -216,6 +225,14 @@ const Page = () => {
                                     {renderSquare(8)}
                                 </div>
                             </div>
+                            {
+                                statusCode === 1 || statusCode === 2 || statusCode === 3 ?
+                                    <div className='flex flex-col gap-3'>
+                                        <Button variant={'secondary'} onClick={() => setGameState('waiting')}>Leave Game</Button>
+                                        <Button variant={'secondary'} onClick={() => setGameState('searching')}>Play against another Player</Button>
+                                        <Button variant={'secondary'} onClick={() => rematch(opponent)}>Rematch</Button>
+                                    </div> : <></>
+                            }
                         </div>
                     }
                 </div>
