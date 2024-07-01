@@ -11,7 +11,7 @@ import { socket } from '@/socket';
 
 const Page = () => {
     const { data: session, status } = useSession();
-    const [player, setPlayer] = useState<Player>(new Player('', '', '', ''));
+    const [player, setPlayer] = useState<Player>(new Player('', '', ''));
     const [Game, setGame] = useState<onlineGame>();
     const loading = status === 'loading';
     const router = useRouter();
@@ -27,14 +27,14 @@ const Page = () => {
         }
         switch (statusCode) {
             case 0:
-                if ((Game.currPlayer ? Game.player1.userID : Game.player2.userID) === player.userID) {
+                if ((Game.currPlayer ? Game.player1.email === player.email : Game.player2.email === player.email)) {
                     return ('Game is On , Your Turn');
                 }
                 else {
                     return ('Game is On , Opponent\'s Turn');
                 }
             case 1:
-                if (Game.player1.userID === player.userID) {
+                if (Game.player1.email === player.email) {
                     return ('You Win');
                 }
                 else {
@@ -42,7 +42,7 @@ const Page = () => {
                 }
                 break;
             case 2:
-                if (Game.player1.userID === player.userID) {
+                if (Game.player1.email === player.email) {
                     return ('Opponent Wins');
                 }
                 else {
@@ -58,18 +58,13 @@ const Page = () => {
     }
 
     useEffect(() => {
-        setPlayer(prevPlayer => ({ ...prevPlayer, socketID: socket.id }));
+        setPlayer(prevPlayer => new Player(socket.id, prevPlayer.name, prevPlayer.email));
     }, [socket]);
 
     useEffect(() => {//gets userID and userName
         if (session && session.user && typeof session.user.email === 'string') {
             const email = session.user.email;
-            fetch(`/api/getUser?email=${encodeURIComponent(session.user.email)}`)
-                .then(res => res.json())
-                .then(data => {
-                    console.log('data:', data);
-                    setPlayer(new Player(data.userID, socket.id, data.name, email));
-                })
+            setPlayer(new Player(socket.id, session.user.name, email));
         }
     }, [session]);
 
@@ -94,10 +89,11 @@ const Page = () => {
             socket.on('gameStarted', (gameID: string, game: onlineGame) => {
                 setStatusCode(0);
                 console.log('gameStarted:', gameID, game);
+                console.log(typeof game.player1, typeof game.player2);
                 socket.emit('join', gameID);
 
                 setGame(game);
-                setOpponent(game.player1.userID === player.userID ? game.player2 : game.player1);
+                setOpponent(game.player1.email === player.email ? game.player2 : game.player1);
                 setGameState('playing');
             });
 
@@ -121,7 +117,7 @@ const Page = () => {
                 console.log('rematchStarted:', gameID, game);
                 socket.emit('join', gameID);
                 setGame(game);
-                setOpponent(game.player1.userID === player.userID ? game.player2 : game.player1);
+                setOpponent(game.player1.email === player.email ? game.player2 : game.player1);
             });
 
             return () => {
@@ -190,8 +186,8 @@ const Page = () => {
                                     <p className='mb-5'>Available Players:</p>
                                     <ul className='flex flex-col bg-emerald-500 rounded-md gap-3'>
                                         {Array.from(availablePlayers?.values() || []).map((anotherPlayer: Player) => {
-                                            return (player.userID != anotherPlayer.userID &&
-                                                <li className='rounded-md p-2' key={anotherPlayer.userID}>
+                                            return (player.email != anotherPlayer.email &&
+                                                <li className='rounded-md p-2' key={anotherPlayer.socketID}>
                                                     <Button variant='outline' onClick={() => playAgainst(anotherPlayer)}>Play against {anotherPlayer.name}</Button>
                                                 </li>)
                                         })}
@@ -205,7 +201,7 @@ const Page = () => {
                         (gameState === 'playing' && getGameStatus(statusCode) != "") &&
                         <div className="flex flex-col gap-5 items-center justify-center w-screen mt-10">
                             <div>You are playing as {
-                                ((Game.currPlayer ? Game.player1.userID : Game.player2.userID) === player.userID) ? Game.currChar : (Game.currChar === 'X' ? 'O' : 'X')
+                                (Game.currPlayer ? Game.player1.email === player.email : Game.player2.email === player.email) ? Game.currChar : (Game.currChar === 'X' ? 'O' : 'X')
                             }</div>
                             <div className='status'>{getGameStatus(statusCode)}</div>
                             <div>
