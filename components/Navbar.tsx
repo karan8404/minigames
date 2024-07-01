@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,9 +14,6 @@ import games from '@/public/games.json';
 
 const Navbar = () => {
   const { data: session, status } = useSession();
-
-  const pathname = usePathname();
-  const gameLinks = games.map(game => game.link);
 
   let content;
 
@@ -63,11 +59,6 @@ const Navbar = () => {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                {gameLinks.includes(pathname) && (
-                  <Link href={`${pathname}/online`}>
-                    <Button variant={'primary'}>Online</Button>
-                  </Link>
-                )}
               </div>
             </div>
           </div>

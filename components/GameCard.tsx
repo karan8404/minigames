@@ -1,8 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle, } from "@/components/ui/card"
-import Image from 'next/image'
-
 
 export default function GameCard(props: Prop) {
   return (
@@ -13,7 +11,7 @@ export default function GameCard(props: Prop) {
               <CardTitle className='text-center'>{props.title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <Image src={props.img} alt="" className='flex items-center justify-center h-56 w-56 object-scale-down' />
+              <img src={props.img} alt="" className='flex items-center justify-center h-56 w-56 object-scale-down' />
             </CardContent>
           </Card>
         </Link>
