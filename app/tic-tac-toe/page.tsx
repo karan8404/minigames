@@ -1,13 +1,13 @@
 'use client'
-import React, { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Player } from '@/components/Player';
 import { onlineGame } from '@/app/tic-tac-toe/onlineGame';
-import { useState } from "react";
 import { Button } from '@/components/ui/button';
 import { socket } from '@/socket';
-
+import { GameState } from '@/components/interfaces/GameState';
+import { MatchMakingHandler, GameOverHandler } from '@/components/MultiplayerHandler';
 
 const Page = () => {
   const { data: session, status } = useSession();
@@ -16,7 +16,7 @@ const Page = () => {
   const loading = status === 'loading';
   const router = useRouter();
   const [opponent, setOpponent] = useState<Player>();
-  const [gameState, setGameState] = useState('waiting');//waiting,searching,playing
+  const [gameState, setGameState] = useState<GameState>(GameState.WAITING);
   const [availablePlayers, setAvailablePlayers] = useState<Map<string, Player>>();
 
   const [statusCode, setStatusCode] = useState<number>(0);
@@ -76,10 +76,10 @@ const Page = () => {
 
   useEffect(() => {
     console.log('gameState:', gameState);
-    if (gameState === 'waiting') {
+    if (gameState === GameState.WAITING) {
       socket.emit('leaveGame');
     }
-    if (gameState === 'searching') {
+    if (gameState === GameState.SEARCHING) {
 
       socket.on('availablePlayers', (ticTacToePlayers) => {
         setAvailablePlayers(new Map(Object.entries(ticTacToePlayers)));
@@ -94,7 +94,7 @@ const Page = () => {
 
         setGame(game);
         setOpponent(game.player1.email === player.email ? game.player2 : game.player1);
-        setGameState('playing');
+        setGameState(GameState.PLAYING);
       });
 
       socket.emit('searching', player);
@@ -104,7 +104,7 @@ const Page = () => {
         socket.off('gameStarted');
       };
     }
-    if (gameState === 'playing') {
+    if (gameState === GameState.PLAYING) {
 
       //TODO listeners during game
       socket.on('moveMade', (game: onlineGame, statusCode: number) => {
@@ -144,14 +144,12 @@ const Page = () => {
 
   const searchPlayers = () => {
     console.log('searching for players', player);
-    setGameState('searching');
+    setGameState(GameState.SEARCHING);
 
   }
 
   const playAgainst = (opponentPlayer: Player) => {
     console.log('play against:', opponentPlayer);
-    // setOpponent(opponentPlayer);
-    // setGameState('playing');
     socket.emit('startGame', player, opponentPlayer)
   }
 
@@ -162,77 +160,38 @@ const Page = () => {
 
   return (
     <div className='container py-5'>
-      {
-        <div className='flex flex-col gap-4 items-center'>
-          <p>User : {player.name}</p>
-          <p>Socket ID : {socket.id}</p>
-          {
-            (gameState === 'waiting' || gameState === 'searching') ?
-              <p>You are not in a Game </p> :
-              <p>You are playing against {opponent.name}</p>
-          }
-
-          {
-            (gameState === 'waiting') &&
-            <Button variant={'secondary'} onClick={searchPlayers}>Search for Users</Button>
-          }
-
-          {
-            (gameState === 'searching') &&
+      <div className='flex flex-col gap-4 items-center'>
+        <MatchMakingHandler gameState={gameState} setGameState={setGameState} player={player} opponent={opponent} socket={socket}
+          searchPlayers={searchPlayers} availablePlayers={availablePlayers} playAgainst={playAgainst} />
+        {
+          (gameState === GameState.PLAYING && getGameStatus(statusCode) != "") &&
+          <div className="flex flex-col gap-5 items-center justify-center w-screen mt-10">
+            <div>You are playing as {
+              (Game.currPlayer ? Game.player1.email === player.email : Game.player2.email === player.email) ? Game.currChar : (Game.currChar === 'X' ? 'O' : 'X')
+            }</div>
+            <div className='status'>{getGameStatus(statusCode)}</div>
             <div>
-              <p className='mb-5'>Searching for Users...</p>
-              {
-                <div className='border-2 border-blue-600 rounded-md p-5'>
-                  <p className='mb-5'>Available Players:</p>
-                  <ul className='flex flex-col bg-emerald-500 rounded-md gap-3'>
-                    {Array.from(availablePlayers?.values() || []).map((anotherPlayer: Player) => {
-                      return (player.email != anotherPlayer.email &&
-                        <li className='rounded-md p-2' key={anotherPlayer.socketID}>
-                          <Button variant='outline' onClick={() => playAgainst(anotherPlayer)}>Play against {anotherPlayer.name}</Button>
-                        </li>)
-                    })}
-                  </ul>
-                </div>
-              }
-              <Button className='mt-5' variant={'secondary'} onClick={() => { setGameState('waiting') }}>Cancel Search</Button>
-            </div>
-          }
-          {
-            (gameState === 'playing' && getGameStatus(statusCode) != "") &&
-            <div className="flex flex-col gap-5 items-center justify-center w-screen mt-10">
-              <div>You are playing as {
-                (Game.currPlayer ? Game.player1.email === player.email : Game.player2.email === player.email) ? Game.currChar : (Game.currChar === 'X' ? 'O' : 'X')
-              }</div>
-              <div className='status'>{getGameStatus(statusCode)}</div>
-              <div>
-                <div className='flex flex-row'>
-                  {renderSquare(0)}
-                  {renderSquare(1)}
-                  {renderSquare(2)}
-                </div>
-                <div className='flex flex-row'>
-                  {renderSquare(3)}
-                  {renderSquare(4)}
-                  {renderSquare(5)}
-                </div>
-                <div className='flex flex-row'>
-                  {renderSquare(6)}
-                  {renderSquare(7)}
-                  {renderSquare(8)}
-                </div>
+              <div className='flex flex-row'>
+                {renderSquare(0)}
+                {renderSquare(1)}
+                {renderSquare(2)}
               </div>
-              {
-                statusCode === 1 || statusCode === 2 || statusCode === 3 ?
-                  <div className='flex flex-col gap-3'>
-                    <Button variant={'secondary'} onClick={() => setGameState('waiting')}>Leave Game</Button>
-                    <Button variant={'secondary'} onClick={() => setGameState('searching')}>Play against another Player</Button>
-                    <Button variant={'secondary'} onClick={() => rematch(opponent)}>Rematch</Button>
-                  </div> : <></>
-              }
+              <div className='flex flex-row'>
+                {renderSquare(3)}
+                {renderSquare(4)}
+                {renderSquare(5)}
+              </div>
+              <div className='flex flex-row'>
+                {renderSquare(6)}
+                {renderSquare(7)}
+                {renderSquare(8)}
+              </div>
             </div>
-          }
-        </div>
-      }
+            <GameOverHandler isGameOver={statusCode === 1 || statusCode === 2 || statusCode === 3} leaveGame={() => setGameState(GameState.WAITING)}
+              newGame={() => setGameState(GameState.SEARCHING)} rematch={() => rematch(opponent)} />
+          </div>
+        }
+      </div>
     </div>
   );
 };

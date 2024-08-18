@@ -1,3 +1,4 @@
+'use client'
 import React from 'react'
 import GameCard from '@/components/GameCard'
 import games from '@/public/games.json'
