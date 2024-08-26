@@ -8,30 +8,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useSession } from 'next-auth/react';
+import { useSession, SignInButton, UserButton,useAuth } from '@clerk/nextjs';
 import { Button } from './ui/button';
 import games from '@/public/games.json';
 
 const Navbar = () => {
-  const { data: session, status } = useSession();
+  const { isLoaded, isSignedIn, session } = useSession();
+  const {} = useAuth();
 
-  let content;
+  let content: JSX.Element;
 
-  if (status === 'authenticated') {
-    const username = session?.user?.name as string;
-    const userImage = session?.user?.image as string;
+  if (isLoaded && isSignedIn) {
     content = (
-      <div className='flex flex-row gap-3'>
-        <img src={userImage} className="rounded-full h-8 w-8" alt={username} />
-        <p className="hidden text-white sm:block">Hello {username}!</p>
-        <Link href={'/api/auth/signout'}>Sign Out</Link>
-      </div>
+      <UserButton showName appearance={{ variables: { colorText:"white",fontSize:"1.2rem",colorBackground:"#1f2937"},elements:{avatarBox:{height:"2rem",width:"2rem"}}}} />
     );
-  } else if (status === 'loading') {
-    content = "Loading...";
+  } else if (!isLoaded) {
+    content = (<p>Loading...</p>);
   } else {
     content = (
-      <Link href={'api/auth/signin'}>Login</Link>
+      <SignInButton>Sign In</SignInButton>
     );
   }
 

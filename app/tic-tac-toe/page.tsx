@@ -1,20 +1,17 @@
 'use client'
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useSession } from '@clerk/nextjs'
 import { Player } from '@/components/Player';
-import { onlineGame } from '@/app/tic-tac-toe/onlineGame';
+import { OnlineGame } from '@/app/tic-tac-toe/OnlineGame';
 import { Button } from '@/components/ui/button';
 import { socket } from '@/socket';
 import { GameState } from '@/components/interfaces/GameState';
 import { MatchMakingHandler, GameOverHandler } from '@/components/MultiplayerHandler';
 
 const Page = () => {
-  const { data: session, status } = useSession();
+  const { session, isLoaded, isSignedIn } = useSession();
   const [player, setPlayer] = useState<Player>(new Player('', '', ''));
-  const [Game, setGame] = useState<onlineGame>();
-  const loading = status === 'loading';
-  const router = useRouter();
+  const [Game, setGame] = useState<OnlineGame>();
   const [opponent, setOpponent] = useState<Player>();
   const [gameState, setGameState] = useState<GameState>(GameState.WAITING);
   const [availablePlayers, setAvailablePlayers] = useState<Map<string, Player>>();
@@ -62,17 +59,11 @@ const Page = () => {
   }, [socket]);
 
   useEffect(() => {//gets userID and userName
-    if (session && session.user && typeof session.user.email === 'string') {
-      const email = session.user.email;
-      setPlayer(new Player(socket.id, session.user.name, email));
-    }
-  }, [session]);
+    if (!isSignedIn)
+      return;
 
-  useEffect(() => {
-    if (!loading && !session) {
-      router.push('/api/auth/signin');
-    }
-  }, [session, loading]);
+    setPlayer(new Player(socket.id, session.user.username, session.user.primaryEmailAddress.emailAddress));
+  }, [session]);
 
   useEffect(() => {
     console.log('gameState:', gameState);
@@ -86,7 +77,7 @@ const Page = () => {
         console.log('availablePlayers:', ticTacToePlayers);
       });
 
-      socket.on('gameStarted', (gameID: string, game: onlineGame) => {
+      socket.on('gameStarted', (gameID: string, game: OnlineGame) => {
         setStatusCode(0);
         console.log('gameStarted:', gameID, game);
         console.log(typeof game.player1, typeof game.player2);
@@ -107,12 +98,12 @@ const Page = () => {
     if (gameState === GameState.PLAYING) {
 
       //TODO listeners during game
-      socket.on('moveMade', (game: onlineGame, statusCode: number) => {
+      socket.on('moveMade', (game: OnlineGame, statusCode: number) => {
         setGame(game);
         setStatusCode(statusCode);
       });
 
-      socket.on('rematchStarted', (gameID: string, game: onlineGame) => {
+      socket.on('rematchStarted', (gameID: string, game: OnlineGame) => {
         setStatusCode(0);
         console.log('rematchStarted:', gameID, game);
         socket.emit('join', gameID);
@@ -127,7 +118,7 @@ const Page = () => {
     }
   }, [gameState]);
 
-  if (loading || socket.disconnected) {
+  if (!isLoaded || socket.disconnected) {
     return <div className='container'>
       Loading...
     </div>;

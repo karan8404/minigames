@@ -7,7 +7,7 @@ import { Server } from "socket.io";
 import http from "http";
 import cors from "cors";
 import { setupTicTacToeHandlers } from "./GameHandlers/TicTacToe";
-import { setupLudoHandlers } from "./GameHandlers/Ludo";
+import { setupSnLHandlers } from "./GameHandlers/SnakesAndLadders";
 const port = parseInt(process.env.PORT) || 3000;
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
@@ -38,7 +38,7 @@ app.prepare().then(() => {
     });
 
     setupTicTacToeHandlers(socket, io);
-    setupLudoHandlers(socket, io);
+    setupSnLHandlers(socket, io);
   });
 
   server.get("*", (req, res) => {

@@ -1,6 +1,6 @@
 import { Player } from "../../components/Player";
 
-export class onlineGame {
+export class OnlineGame {
   gameID: string;
   player1: Player;
   player2: Player;
